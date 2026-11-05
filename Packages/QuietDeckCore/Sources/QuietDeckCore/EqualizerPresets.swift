@@ -33,14 +33,13 @@ public final class EqualizerPresetStore {
 
     /// The preset matching these values exactly, if any.
     public func preset(matching bands: [EqualizerBandValue]) -> EqualizerPreset? {
-        let values = Dictionary(uniqueKeysWithValues: bands.map { ($0.id, $0.value) })
+        let values = Self.values(of: bands)
         return presets.first { $0.values == values }
     }
 
     @discardableResult
     public func save(name: String, bands: [EqualizerBandValue]) -> EqualizerPreset {
-        let values = Dictionary(uniqueKeysWithValues: bands.map { ($0.id, $0.value) })
-        let preset = EqualizerPreset(name: name, values: values)
+        let preset = EqualizerPreset(name: name, values: Self.values(of: bands))
         presets.append(preset)
         persist()
         return preset
@@ -55,6 +54,11 @@ public final class EqualizerPresetStore {
     public func delete(_ id: EqualizerPreset.ID) {
         presets.removeAll { $0.id == id }
         persist()
+    }
+
+    /// Bands come from the device, so a repeated ID must not be able to crash the app.
+    private static func values(of bands: [EqualizerBandValue]) -> [Int: Int] {
+        Dictionary(bands.map { ($0.id, $0.value) }) { _, latest in latest }
     }
 
     private func persist() {

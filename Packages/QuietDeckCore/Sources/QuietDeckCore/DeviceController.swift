@@ -93,7 +93,11 @@ public final class DeviceController {
     private let takeoverAttempts = 6
     private let connectPollInterval: Duration
     private let connectAttempts = 20
-    private var scheduler: CommandScheduler!
+    private let schedulerConfiguration: CommandScheduler.Configuration
+    @ObservationIgnored private lazy var scheduler = CommandScheduler(configuration: schedulerConfiguration) {
+        [weak self] command in
+        await self?.execute(command)
+    }
     private var listener: Task<Void, Never>?
     private var poller: Task<Void, Never>?
     private var isRefreshing = false
@@ -111,10 +115,8 @@ public final class DeviceController {
         self.refreshInterval = refreshInterval
         self.takeoverPause = takeoverPause
         self.connectPollInterval = connectPollInterval
+        self.schedulerConfiguration = schedulerConfiguration
         capabilities = DeviceCapabilities()
-        scheduler = CommandScheduler(configuration: schedulerConfiguration) { [weak self] command in
-            await self?.execute(command)
-        }
     }
 
     /// The values to show: confirmed values with pending requests on top.
@@ -157,9 +159,8 @@ public final class DeviceController {
     }
 
     public func disconnect() async {
-        poller?.cancel()
-        poller = nil
-        await scheduler.cancelAll()
+        stopPolling()
+        discardPendingWork()
         await driver.disconnect()
         phase = .disconnected
     }
@@ -173,10 +174,6 @@ public final class DeviceController {
         if let state = try? await driver.refreshState(), requests.isEmpty {
             confirmed = state
         }
-    }
-
-    public func dismissProblem() {
-        problem = nil
     }
 
     public func selectMode(_ id: ListeningMode.ID) {
@@ -301,8 +298,7 @@ public final class DeviceController {
     private func submit(_ command: DeviceCommand) {
         trace?("submit \(command) phase \(phase)")
         problem = nil
-        let scheduler = scheduler!
-        Task { await scheduler.submit(command) }
+        scheduler.submit(command)
     }
 
     private func execute(_ command: DeviceCommand) async {
@@ -397,6 +393,8 @@ public final class DeviceController {
             trace?("connection connected")
             let wasReconnecting = phase != .connected
             phase = .connected
+            // A device that was off at launch connects here, without `connect()` finishing.
+            startPolling()
             if wasReconnecting {
                 await refresh()
             }
@@ -404,24 +402,38 @@ public final class DeviceController {
             trace?("connection lost")
             if phase == .connected {
                 phase = .connecting
-                await scheduler.cancelAll()
-                requests = Requests()
-                switchingSource = nil
+                discardPendingWork()
             }
         case .connectionChanged(.disconnected):
             trace?("connection disconnected")
             phase = .disconnected
+            stopPolling()
+            discardPendingWork()
         }
     }
 
+    /// Forgets what wasn't sent. A pending request would otherwise block every refresh and
+    /// keep showing a value the device never received.
+    private func discardPendingWork() {
+        scheduler.cancelAll()
+        requests = Requests()
+        switchingSource = nil
+    }
+
     private func startPolling() {
-        poller?.cancel()
+        guard poller == nil else { return }
         let interval = refreshInterval
         poller = Task { [weak self] in
             while !Task.isCancelled {
-                try? await Task.sleep(for: interval)
+                // The tolerance lets the system group this wake-up with others.
+                try? await Task.sleep(for: interval, tolerance: interval / 10)
                 await self?.refresh()
             }
         }
+    }
+
+    private func stopPolling() {
+        poller?.cancel()
+        poller = nil
     }
 }

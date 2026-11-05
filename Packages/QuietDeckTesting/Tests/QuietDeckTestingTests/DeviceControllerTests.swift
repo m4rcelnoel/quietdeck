@@ -47,6 +47,42 @@ private func eventually(_ condition: () async -> Bool) async -> Bool {
         #expect(controller.phase == .connectionFailed)
     }
 
+    @Test func aDeviceThatAppearsLaterIsPolled() async {
+        let driver = MockDriver(capabilities: Fixtures.fullCapabilities, state: Fixtures.fullState)
+        await driver.failNext(with: .transportFailed("off"))
+        let controller = DeviceController(
+            driver: driver, schedulerConfiguration: timing, refreshInterval: .milliseconds(10)
+        )
+        await controller.connect()
+        #expect(controller.phase == .connectionFailed)
+
+        await driver.simulateConnection(.connected)
+        #expect(await eventually { controller.phase == .connected })
+        await driver.simulateSilentChange { $0.battery = BatteryStatus(percent: 12) }
+        #expect(await eventually { controller.state.battery?.percent == 12 })
+    }
+
+    @Test func disconnectingForgetsWhatWasNotSent() async {
+        let (controller, driver) = await connected()
+        controller.setNoiseLevel(3)
+        await controller.disconnect()
+        #expect(controller.state.noiseLevel == Fixtures.fullState.noiseLevel)
+
+        await controller.connect()
+        await driver.simulateSilentChange { $0.battery = BatteryStatus(percent: 12) }
+        await controller.refresh()
+        #expect(controller.state.battery?.percent == 12)
+        #expect(await driver.performed.isEmpty)
+    }
+
+    @Test func givingUpForgetsWhatWasNotSent() async {
+        let (controller, driver) = await connected()
+        controller.setNoiseLevel(3)
+        await driver.simulateConnection(.disconnected)
+        #expect(await eventually { controller.phase == .disconnected })
+        #expect(controller.state.noiseLevel == Fixtures.fullState.noiseLevel)
+    }
+
     @Test func changesShowImmediately() async {
         let (controller, _) = await connected()
         controller.setNoiseLevel(3)
@@ -385,6 +421,11 @@ private actor FakeStream: LocalAudioStream {
         #expect(store.presets.first?.name == "Cozy")
         store.delete(preset.id)
         #expect(store.presets.isEmpty)
+    }
+
+    @Test func repeatedBandsDoNotCrash() {
+        let repeated = [EqualizerBandValue(id: 0, value: 1), EqualizerBandValue(id: 0, value: 2)]
+        #expect(store().preset(matching: repeated) == nil)
     }
 
     @Test func survivesRelaunch() {
