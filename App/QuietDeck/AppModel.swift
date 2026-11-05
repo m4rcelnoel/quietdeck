@@ -19,6 +19,7 @@ final class AppModel {
     let settings: AppSettings
     let notifier: Notifier
     let console = ProtocolConsoleModel()
+    let updater = AppUpdater()
 
     /// What the main window shows. Kept here so the panel and menus can open a page.
     var selectedSection: WindowSection = .device(.listening)

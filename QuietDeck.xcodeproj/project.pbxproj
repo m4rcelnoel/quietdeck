@@ -12,7 +12,9 @@
 		A10000000000000000000013 /* BoseDriver in Frameworks */ = {isa = PBXBuildFile; productRef = A10000000000000000000023 /* BoseDriver */; };
 		A10000000000000000000014 /* HandoffKit in Frameworks */ = {isa = PBXBuildFile; productRef = A10000000000000000000024 /* HandoffKit */; };
 		A10000000000000000000015 /* QuietDeckTesting in Frameworks */ = {isa = PBXBuildFile; productRef = A10000000000000000000025 /* QuietDeckTesting */; };
+		A10000000000000000000016 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = A10000000000000000000026 /* Sparkle */; };
 /* End PBXBuildFile section */
+
 
 /* Begin PBXFileReference section */
 		A10000000000000000000001 /* QuietDeck.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = QuietDeck.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -36,6 +38,7 @@
 				A10000000000000000000013 /* BoseDriver in Frameworks */,
 				A10000000000000000000014 /* HandoffKit in Frameworks */,
 				A10000000000000000000015 /* QuietDeckTesting in Frameworks */,
+				A10000000000000000000016 /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -83,6 +86,7 @@
 				A10000000000000000000023 /* BoseDriver */,
 				A10000000000000000000024 /* HandoffKit */,
 				A10000000000000000000025 /* QuietDeckTesting */,
+				A10000000000000000000026 /* Sparkle */,
 			);
 			productName = QuietDeck;
 			productReference = A10000000000000000000001 /* QuietDeck.app */;
@@ -114,6 +118,7 @@
 				A10000000000000000000043 /* XCLocalSwiftPackageReference "Packages/BoseDriver" */,
 				A10000000000000000000044 /* XCLocalSwiftPackageReference "Packages/HandoffKit" */,
 				A10000000000000000000045 /* XCLocalSwiftPackageReference "Packages/QuietDeckTesting" */,
+				A10000000000000000000046 /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A10000000000000000000005 /* Products */;
@@ -198,6 +203,7 @@
 				MARKETING_VERSION = 0.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.buddster.quietdeck.debug;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SPARKLE_PUBLIC_KEY = "JAHL8m9sK1/1GnVPAQu4265ajOkQEdFZTc52zDPTXX8=";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 			};
 			name = Debug;
@@ -218,6 +224,7 @@
 				MARKETING_VERSION = 0.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.buddster.quietdeck;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SPARKLE_PUBLIC_KEY = "JAHL8m9sK1/1GnVPAQu4265ajOkQEdFZTc52zDPTXX8=";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 			};
 			name = Release;
@@ -268,6 +275,17 @@
 		};
 /* End XCLocalSwiftPackageReference section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		A10000000000000000000046 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.10.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
 		A10000000000000000000021 /* QuietDeckCore */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -288,6 +306,11 @@
 		A10000000000000000000025 /* QuietDeckTesting */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = QuietDeckTesting;
+		};
+		A10000000000000000000026 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A10000000000000000000046 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

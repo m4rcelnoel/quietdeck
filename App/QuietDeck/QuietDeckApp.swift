@@ -53,6 +53,7 @@ private struct AppCommands: Commands {
     var body: some Commands {
         CommandGroup(replacing: .appInfo) {
             Button("About QuietDeck") { show(.about) }
+            CheckForUpdatesButton(updater: app.updater)
         }
         CommandGroup(replacing: .appSettings) {
             Button("Settings…") { show(.settings) }
@@ -94,6 +95,7 @@ private struct MenuBarLabel: View {
                 guard !isRunningDiagnostics else { return }
                 DockPresence.apply(keepIcon: app.settings.keepDockIcon)
                 app.activateShortcuts()
+                app.updater.start()
                 if app.settings.completedOnboarding {
                     await app.start()
                 } else {

@@ -34,6 +34,14 @@
 	<array>
 		<string>_quietdeck._tcp</string>
 	</array>
+	<key>SUEnableAutomaticChecks</key>
+	<false/>
+	<key>SUEnableInstallerLauncherService</key>
+	<true/>
+	<key>SUFeedURL</key>
+	<string>https://github.com/m4rcelnoel/quietdeck/releases/latest/download/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>$(SPARKLE_PUBLIC_KEY)</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>QuietDeck finds your other Macs on the local network so you can send audio between them.</string>
 </dict>
