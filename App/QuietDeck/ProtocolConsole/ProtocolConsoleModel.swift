@@ -22,6 +22,9 @@ final class ProtocolConsoleModel {
         var hex: String { FrameLogExport.hex(frame.bytes) }
     }
 
+    /// The session runs for days and polls all the time, so the log has to stay bounded.
+    private static let maximumRows = 2000
+
     private(set) var rows: [Row] = []
     private(set) var status = ""
     private(set) var composer: FrameComposerSpec?
@@ -129,5 +132,8 @@ final class ProtocolConsoleModel {
         guard !isPaused else { return }
         rows.append(Row(id: nextRowID, entry: entry))
         nextRowID += 1
+        if rows.count > Self.maximumRows {
+            rows.removeFirst(rows.count - Self.maximumRows)
+        }
     }
 }

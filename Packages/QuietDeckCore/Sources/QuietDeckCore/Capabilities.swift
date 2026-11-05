@@ -68,10 +68,6 @@ public struct LevelCapability: Sendable, Equatable {
     public init(range: ClosedRange<Int>) {
         self.range = range
     }
-
-    public func clamp(_ value: Int) -> Int {
-        min(max(value, range.lowerBound), range.upperBound)
-    }
 }
 
 public struct OptionsCapability<Option: Sendable & Equatable>: Sendable, Equatable {

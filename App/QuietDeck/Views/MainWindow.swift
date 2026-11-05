@@ -111,7 +111,7 @@ struct MainWindow: View {
                 .frame(width: 34, height: 34)
                 .background(.tint, in: .rect(cornerRadius: 9))
             VStack(alignment: .leading, spacing: 1) {
-                Text(controller.state.name ?? String(localized: "Headphones"))
+                Text(controller.displayName)
                     .font(.headline)
                     .lineLimit(1)
                 Text(controller.statusText)

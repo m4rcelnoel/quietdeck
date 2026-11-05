@@ -41,6 +41,8 @@ public actor BoseHeadphoneDriver: HeadphoneDriver {
     private var storedCapabilities = BoseHeadphoneDriver.allCapabilities
     private var state = DeviceState()
     private var audio: BoseAudioSettings?
+    /// Name and firmware only change between connections, so polling doesn't read them.
+    private var identity: (name: String?, firmware: String?)?
     private var listeners: [Task<Void, Never>] = []
 
     public init(device: DiscoveredDevice, transport: any ByteTransport) {
@@ -73,8 +75,9 @@ public actor BoseHeadphoneDriver: HeadphoneDriver {
     /// Reads everything. A function the device refuses is left unread, not fatal.
     public func refreshState() async throws -> DeviceState {
         var next = DeviceState()
-        next.name = BoseStateCodec.name(try await read(BoseAddress.productName) ?? [])
-        next.firmwareVersion = BoseStateCodec.firmware(try await read(BoseAddress.firmware) ?? [])
+        let identity = try await readIdentity()
+        next.name = identity.name
+        next.firmwareVersion = identity.firmware
         next.battery = (try await read(BoseAddress.batteryLevel))
             .flatMap(BoseStateCodec.batteryPercent)
             .map { BatteryStatus(percent: $0) }
@@ -169,10 +172,18 @@ public actor BoseHeadphoneDriver: HeadphoneDriver {
         }
     }
 
+    private func readIdentity() async throws -> (name: String?, firmware: String?) {
+        if let identity { return identity }
+        let name = BoseStateCodec.name(try await read(BoseAddress.productName) ?? [])
+        let firmware = BoseStateCodec.firmware(try await read(BoseAddress.firmware) ?? [])
+        identity = (name, firmware)
+        return (name, firmware)
+    }
+
     private func readSources() async throws -> AudioSourceList? {
         guard let list = try await read(BoseAddress.pairedDevices) else { return nil }
         var devices: [BoseDeviceInfo] = []
-        for address in BoseProbe.macAddresses(inDeviceList: list) {
+        for address in BoseStateCodec.addresses(inDeviceList: list) {
             if let payload = try await read(BoseAddress.deviceInfo, payload: address),
                 let info = BoseStateCodec.deviceInfo(payload)
             {
@@ -234,10 +245,11 @@ public actor BoseHeadphoneDriver: HeadphoneDriver {
         let client = client
         let continuation = continuation
         listeners = [
-            Task {
+            Task { [weak self] in
                 for await event in client.connectionEvents {
                     switch event {
                     case .opened:
+                        await self?.forgetIdentity()
                         continuation.yield(.connectionChanged(.connected))
                     case .lost:
                         continuation.yield(.connectionChanged(.connecting))
@@ -254,6 +266,10 @@ public actor BoseHeadphoneDriver: HeadphoneDriver {
         ]
     }
 
+    private func forgetIdentity() {
+        identity = nil
+    }
+
     /// Applies changes the device reports by itself, such as a button press.
     private func handleUnsolicited(_ frame: BMAPFrame) {
         guard frame.operator == .status else { return }
@@ -266,7 +282,8 @@ public actor BoseHeadphoneDriver: HeadphoneDriver {
         case BoseAddress.equalizer:
             state.equalizer = BoseStateCodec.equalizer(frame.payload) ?? state.equalizer
         case BoseAddress.batteryLevel:
-            state.battery = BoseStateCodec.batteryPercent(frame.payload).map { BatteryStatus(percent: $0) }
+            state.battery =
+                BoseStateCodec.batteryPercent(frame.payload).map { BatteryStatus(percent: $0) } ?? state.battery
         case BoseAddress.multipoint:
             state.multipoint = BoseStateCodec.multipoint(frame.payload) ?? state.multipoint
         default:

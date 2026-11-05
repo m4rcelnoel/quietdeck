@@ -86,15 +86,15 @@ private func needsConfirmation(_ verdict: RawFrameVerdict) -> Bool {
     }
 }
 
-@Suite struct BoseProbeTests {
+@Suite struct DeviceListTests {
     @Test func skipsEmptySlots() {
         let mac: [UInt8] = [1, 2, 3, 4, 5, 6]
         let empty = [UInt8](repeating: 0, count: 6)
-        #expect(BoseProbe.macAddresses(inDeviceList: [2] + mac + empty + mac) == [mac, mac])
+        #expect(BoseStateCodec.addresses(inDeviceList: [2] + mac + empty + mac) == [mac, mac])
     }
 
     @Test func toleratesShortLists() {
-        #expect(BoseProbe.macAddresses(inDeviceList: []).isEmpty)
-        #expect(BoseProbe.macAddresses(inDeviceList: [1, 2, 3]).isEmpty)
+        #expect(BoseStateCodec.addresses(inDeviceList: []).isEmpty)
+        #expect(BoseStateCodec.addresses(inDeviceList: [1, 2, 3]).isEmpty)
     }
 }

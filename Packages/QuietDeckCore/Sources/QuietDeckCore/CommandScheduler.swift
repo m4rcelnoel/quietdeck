@@ -2,7 +2,11 @@
 ///
 /// Commands of the same kind replace each other: only the latest value is sent. Partial
 /// audio commands are merged, so changing noise and wind in one window sends both.
-public actor CommandScheduler {
+///
+/// Lives on the main actor so that `submit` runs synchronously: going through a task to
+/// reach an actor wouldn't keep commands in order, and a stale value could win.
+@MainActor
+public final class CommandScheduler {
     public struct Configuration: Sendable {
         public var sliderDelay: Duration
         public var discreteDelay: Duration
@@ -24,12 +28,12 @@ public actor CommandScheduler {
     }
 
     private let configuration: Configuration
-    private let execute: @Sendable (DeviceCommand) async -> Void
+    private let execute: @MainActor (DeviceCommand) async -> Void
     private var pending: [Key: Pending] = [:]
 
     public init(
         configuration: Configuration = Configuration(),
-        execute: @escaping @Sendable (DeviceCommand) async -> Void
+        execute: @escaping @MainActor (DeviceCommand) async -> Void
     ) {
         self.configuration = configuration
         self.execute = execute

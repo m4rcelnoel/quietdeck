@@ -17,26 +17,16 @@ struct SourcesSection: View {
         ProblemNote(controller: controller, controls: [.source, .connection, .multipoint])
         if controller.capabilities.multipoint != nil, let multipoint = controller.state.multipoint {
             DeckGroup {
-                DeckRow {
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("Multipoint")
-                        Text("Stay connected to two devices at once.")
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                    Toggle("Multipoint", isOn: Binding(get: { multipoint }, set: { setMultipoint($0) }))
-                        .labelsHidden()
-                        .toggleStyle(.switch)
-                        .confirmationDialog(
-                            "Turn off multipoint?",
-                            isPresented: $isConfirmingMultipointOff
-                        ) {
-                            Button("Turn off", role: .destructive) { controller.setMultipoint(false) }
-                            Button("Cancel", role: .cancel) {}
-                        } message: {
-                            Text("Your other device disconnects and won't reconnect by itself.")
-                        }
+                SwitchRow(
+                    title: "Multipoint",
+                    detail: "Stay connected to two devices at once.",
+                    isOn: Binding(get: { multipoint }, set: { setMultipoint($0) })
+                )
+                .confirmationDialog("Turn off multipoint?", isPresented: $isConfirmingMultipointOff) {
+                    Button("Turn off", role: .destructive) { controller.setMultipoint(false) }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("Your other device disconnects and won't reconnect by itself.")
                 }
             }
         }

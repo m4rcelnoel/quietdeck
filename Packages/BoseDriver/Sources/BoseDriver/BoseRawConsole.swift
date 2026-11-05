@@ -18,7 +18,9 @@ public final class BoseRawConsole: RawFrameConsole {
 
     init(client: BMAPClient) {
         self.client = client
-        let (stream, continuation) = AsyncStream.makeStream(of: FrameLogEntry.self)
+        let (stream, continuation) = AsyncStream.makeStream(
+            of: FrameLogEntry.self, bufferingPolicy: .bufferingNewest(256)
+        )
         traffic = stream
         forwarder = Task {
             let clock = ContinuousClock()
@@ -28,7 +30,7 @@ public final class BoseRawConsole: RawFrameConsole {
                 continuation.yield(
                     FrameLogEntry(
                         secondsSinceSessionStart: Double(parts.seconds) + Double(parts.attoseconds) / 1e18,
-                        direction: item.direction == .sent ? .sent : .received,
+                        direction: item.direction,
                         bytes: item.frame.encoded(),
                         summary: Self.summary(of: item.frame)
                     )

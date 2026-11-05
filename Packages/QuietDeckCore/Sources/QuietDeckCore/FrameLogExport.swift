@@ -9,11 +9,8 @@ public enum FrameLogExport {
         var summary: String
     }
 
-    public static func hex(_ bytes: [UInt8]) -> String {
-        bytes.map { byte in
-            let digits = String(byte, radix: 16)
-            return digits.count == 1 ? "0" + digits : digits
-        }.joined(separator: " ")
+    public static func hex(_ bytes: [UInt8], separator: String = " ") -> String {
+        bytes.map { String(format: "%02x", $0) }.joined(separator: separator)
     }
 
     public static func text(_ entries: [FrameLogEntry]) -> String {

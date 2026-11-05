@@ -1,4 +1,5 @@
 import AppKit
+import Carbon.HIToolbox
 import SwiftUI
 
 /// Records one key combination. Escape cancels.
@@ -38,7 +39,7 @@ struct ShortcutRecorder: View {
     private func start() {
         isRecording = true
         monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-            if event.keyCode == 53 {
+            if Int(event.keyCode) == kVK_Escape {
                 stop()
             } else if let recorded = KeyCombo(event: event) {
                 combo = recorded

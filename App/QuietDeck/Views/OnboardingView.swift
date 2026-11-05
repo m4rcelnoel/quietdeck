@@ -63,12 +63,11 @@ struct OnboardingView: View {
                     title: "You're all set",
                     detail: "QuietDeck lives in the menu bar. Click the headphones icon at the top of your screen."
                 )
-                @Bindable var settings = app.settings
                 Toggle(
                     "Launch at login",
                     isOn: Binding(
-                        get: { settings.launchesAtLogin },
-                        set: { settings.launchesAtLogin = $0 }
+                        get: { app.settings.launchesAtLogin },
+                        set: { app.settings.setLaunchesAtLogin($0) }
                     )
                 )
                 .toggleStyle(.switch)

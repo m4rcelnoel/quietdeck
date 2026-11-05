@@ -1,5 +1,4 @@
 #if DEBUG
-    import AVFoundation
     import AppKit
     import BluetoothTransport
     import BoseDriver
@@ -16,10 +15,6 @@
     /// `--driver-verify` runs the full driver: read, change the mode, restore.
     /// `--watch-events` logs what the device reports by itself for 40 seconds.
     /// `--app-check` runs the app's own path: model, controller, scheduler and driver.
-    /// `--route-watch` follows routing for a minute while another device starts playing.
-    /// `--bring-here` tries to take audio back from another device that's playing.
-    /// `--connect-test` asks the headset to connect each remembered computer.
-    /// `--source-verify` tries source switching and multipoint. It can interrupt audio.
     @MainActor
     enum TransportDiagnostics {
         private static let transactionCount = 100
@@ -74,32 +69,18 @@
             let waitForReconnect = arguments.contains("--reconnect-test")
             let sweep = arguments.contains("--protocol-sweep")
             let verifyWrites = arguments.contains("--write-verify")
-            let verifySources = arguments.contains("--source-verify")
-            let watchRouting = arguments.contains("--route-watch")
-            let bringHere = arguments.contains("--bring-here")
-            let connectTest = arguments.contains("--connect-test")
-            guard
-                waitForReconnect || sweep || verifyWrites || verifySources || watchRouting || bringHere || connectTest
-                    || arguments.contains("--transport-test")
-            else {
+            guard waitForReconnect || sweep || verifyWrites || arguments.contains("--transport-test") else {
                 return false
             }
             Task {
-                await run(
-                    waitForReconnect: waitForReconnect, sweep: sweep, verifyWrites: verifyWrites,
-                    verifySources: verifySources, watchRouting: watchRouting, bringHere: bringHere,
-                    connectTest: connectTest
-                )
+                await run(waitForReconnect: waitForReconnect, sweep: sweep, verifyWrites: verifyWrites)
                 log("DONE")
                 exit(0)
             }
             return true
         }
 
-        private static func run(
-            waitForReconnect: Bool, sweep: Bool, verifyWrites: Bool, verifySources: Bool, watchRouting: Bool,
-            bringHere: Bool, connectTest: Bool
-        ) async {
+        private static func run(waitForReconnect: Bool, sweep: Bool, verifyWrites: Bool) async {
             let paired = await BluetoothDevices.paired()
             log("paired devices: \(paired.count)")
             guard let device = paired.first(where: { $0.name.hasPrefix("Bose QC Ultra") }) else {
@@ -166,31 +147,6 @@
 
             if verifyWrites {
                 await BoseProbe.verifyWrites(client) { log($0) }
-            }
-
-            if connectTest {
-                await BoseProbe.connectRemembered(client) { log($0) }
-            }
-
-            if bringHere {
-                let host = await BluetoothDevices.hostAddress() ?? ""
-                let bytes = host.split(separator: ":").compactMap { UInt8($0, radix: 16) }
-                let stream = SilentStream()
-                await BoseProbe.bringAudioHere(
-                    client,
-                    hostAddress: bytes,
-                    startStream: { await stream.start(faintSignal: $0) },
-                    stopStream: { await stream.stop() },
-                    log: { log($0) }
-                )
-            }
-
-            if watchRouting {
-                await BoseProbe.watchRouting(client, duration: .seconds(90)) { log($0) }
-            }
-
-            if verifySources {
-                await BoseProbe.verifySourcesAndMultipoint(client) { log($0) }
             }
 
             if waitForReconnect {
@@ -360,38 +316,6 @@
             } else {
                 try? Data(line.utf8).write(to: url)
             }
-        }
-    }
-
-    /// Keeps the default output running, with silence or a signal far below hearing.
-    @MainActor
-    private final class SilentStream: Sendable {
-        private var engine: AVAudioEngine?
-
-        func start(faintSignal: Bool) {
-            let engine = AVAudioEngine()
-            let player = AVAudioPlayerNode()
-            let format = engine.mainMixerNode.outputFormat(forBus: 0)
-            engine.attach(player)
-            engine.connect(player, to: engine.mainMixerNode, format: format)
-            guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 4096) else { return }
-            buffer.frameLength = 4096
-            if faintSignal, let channels = buffer.floatChannelData {
-                for channel in 0..<Int(format.channelCount) {
-                    for frame in 0..<4096 {
-                        channels[channel][frame] = frame.isMultiple(of: 2) ? 0.00002 : -0.00002
-                    }
-                }
-            }
-            try? engine.start()
-            player.scheduleBuffer(buffer, at: nil, options: .loops)
-            player.play()
-            self.engine = engine
-        }
-
-        func stop() {
-            engine?.stop()
-            engine = nil
         }
     }
 

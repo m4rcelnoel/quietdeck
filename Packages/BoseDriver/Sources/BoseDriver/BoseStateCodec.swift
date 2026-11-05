@@ -17,7 +17,6 @@ struct BoseAudioSettings: Equatable, Sendable {
 struct BoseDeviceInfo: Equatable, Sendable {
     var address: [UInt8]
     var isConnected: Bool
-    var isActive: Bool
     var kind: AudioSource.Kind
     var name: String
 }
@@ -26,7 +25,6 @@ struct BoseDeviceInfo: Equatable, Sendable {
 /// pure, so all of it is tested against payloads recorded from real hardware.
 enum BoseStateCodec {
     static let noiseLevels = 0...10
-    static let customModeIndex: UInt8 = 0xFF
 
     static let modes = [
         ListeningMode(id: "quiet", name: "Quiet", kind: .quiet),
@@ -128,7 +126,6 @@ enum BoseStateCodec {
         return BoseDeviceInfo(
             address: Array(payload[0..<6]),
             isConnected: payload[6] & 0b01 != 0,
-            isActive: payload[6] & 0b10 != 0,
             kind: kind,
             name: String(decoding: payload[9...], as: UTF8.self)
         )
@@ -146,11 +143,17 @@ enum BoseStateCodec {
         (deviceList.first ?? 0) & 0b100 != 0
     }
 
+    /// Splits a `[4.4]` payload into addresses, skipping empty slots.
+    static func addresses(inDeviceList payload: [UInt8]) -> [[UInt8]] {
+        let entries = payload.dropFirst()
+        return stride(from: entries.startIndex, to: entries.endIndex - 5, by: 6).compactMap { start in
+            let address = Array(entries[start..<(start + 6)])
+            return address.allSatisfy { $0 == 0 } ? nil : address
+        }
+    }
+
     static func sourceID(_ address: [UInt8]) -> AudioSource.ID {
-        address.map { byte in
-            let digits = String(byte, radix: 16, uppercase: true)
-            return digits.count == 1 ? "0" + digits : digits
-        }.joined(separator: ":")
+        FrameLogExport.hex(address, separator: ":").uppercased()
     }
 
     static func address(fromSourceID id: AudioSource.ID) -> [UInt8]? {

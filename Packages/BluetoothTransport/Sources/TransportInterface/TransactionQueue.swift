@@ -7,12 +7,11 @@ public final class TransactionQueue: Sendable {
     private typealias Job = @Sendable () async -> Void
 
     private let jobs: AsyncStream<Job>.Continuation
-    private let worker: Task<Void, Never>
 
     public init() {
         let (stream, continuation) = AsyncStream.makeStream(of: Job.self)
         jobs = continuation
-        worker = Task {
+        Task {
             for await job in stream {
                 await job()
             }

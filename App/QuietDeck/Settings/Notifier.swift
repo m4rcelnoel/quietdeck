@@ -10,6 +10,7 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
     private let settings: AppSettings
     private var battery = BatteryAlertMonitor()
     private var disconnectTask: Task<Void, Never>?
+    private var wasConnected = false
 
     private var center: UNUserNotificationCenter {
         .current()
@@ -42,17 +43,30 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
     }
 
     func phaseChanged(_ phase: DeviceController.Phase) {
-        disconnectTask?.cancel()
-        guard phase != .connected, settings.notifyDisconnect else { return }
+        if phase == .connected {
+            wasConnected = true
+            disconnectTask?.cancel()
+            disconnectTask = nil
+            return
+        }
+        // Headphones that are off at launch weren't lost, and later phases of the same
+        // outage must not restart the wait.
+        guard wasConnected, disconnectTask == nil, settings.notifyDisconnect else { return }
         // Short drops and reconnections aren't worth a notification.
         disconnectTask = Task { [weak self] in
             try? await Task.sleep(for: Self.disconnectGrace)
             guard !Task.isCancelled else { return }
-            self?.post(
-                title: String(localized: "Connection lost"),
-                body: String(localized: "Your headphones are no longer connected.")
-            )
+            self?.connectionStayedLost()
         }
+    }
+
+    private func connectionStayedLost() {
+        wasConnected = false
+        disconnectTask = nil
+        post(
+            title: String(localized: "Connection lost"),
+            body: String(localized: "Your headphones are no longer connected.")
+        )
     }
 
     /// Each notification gets its own ID: one reusing an ID still in Notification Center

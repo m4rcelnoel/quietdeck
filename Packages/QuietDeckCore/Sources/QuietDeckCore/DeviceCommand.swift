@@ -38,14 +38,4 @@ public enum DriverError: Error, Sendable, Equatable {
     case rejected(code: Int, reason: String)
     case malformedResponse
     case transportFailed(String)
-
-    /// Whether trying again later could succeed.
-    public var isRetryable: Bool {
-        switch self {
-        case .timeout, .busy, .notConnected, .transportFailed:
-            return true
-        case .unsupported, .authenticationRequired, .rejected, .malformedResponse:
-            return false
-        }
-    }
 }

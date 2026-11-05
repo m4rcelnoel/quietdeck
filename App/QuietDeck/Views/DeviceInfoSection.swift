@@ -14,7 +14,7 @@ struct DeviceInfoSection: View {
                 BatteryRing(battery: state.battery, size: 56)
             }
             VStack(alignment: .leading, spacing: 2) {
-                Text(state.name ?? String(localized: "Headphones"))
+                Text(controller.displayName)
                     .font(.title2.weight(.semibold))
                 Text(controller.statusText)
                     .font(.callout)

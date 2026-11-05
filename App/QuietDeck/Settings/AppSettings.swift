@@ -30,7 +30,7 @@ enum ShortcutAction: String, CaseIterable, Codable, Identifiable {
 @MainActor
 @Observable
 final class AppSettings {
-    private enum Key {
+    enum Key {
         static let keepDockIcon = "keepDockIcon"
         static let showModeInMenuBar = "showModeInMenuBar"
         static let showHUD = "showHUD"
@@ -67,6 +67,8 @@ final class AppSettings {
     var shortcuts: [ShortcutAction: KeyCombo] {
         didSet { defaults.set(try? JSONEncoder().encode(shortcuts), forKey: Key.shortcuts) }
     }
+    /// Whether the app starts at login. The system owns this value, so it isn't saved here.
+    private(set) var launchesAtLogin = SMAppService.mainApp.status == .enabled
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -91,19 +93,21 @@ final class AppSettings {
         }
     }
 
-    /// Whether the app starts at login. The system owns this value, so it isn't stored here.
-    var launchesAtLogin: Bool {
-        get { SMAppService.mainApp.status == .enabled }
-        set {
-            do {
-                if newValue {
-                    try SMAppService.mainApp.register()
-                } else {
-                    try SMAppService.mainApp.unregister()
-                }
-            } catch {
-                // The toggle reads the system's value, so it shows what really happened.
+    func setLaunchesAtLogin(_ enabled: Bool) {
+        do {
+            if enabled {
+                try SMAppService.mainApp.register()
+            } else {
+                try SMAppService.mainApp.unregister()
             }
+        } catch {
+            // The value is read back below, so the switch shows what really happened.
         }
+        reloadLaunchAtLogin()
+    }
+
+    /// The user can also change this in System Settings.
+    func reloadLaunchAtLogin() {
+        launchesAtLogin = SMAppService.mainApp.status == .enabled
     }
 }
