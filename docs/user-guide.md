@@ -51,6 +51,10 @@ Your headphones don't report button presses. QuietDeck reads them again every 30
 
 Set global shortcuts in Settings for each mode, for the next mode and for bringing audio here. A shortcut needs Command, Control or Option.
 
+## Updates
+
+Choose QuietDeck > Check for Updates, or open Settings > Updates. The app downloads and installs a new version and restarts. It checks on its own only if you turn on automatic checks. Version 0.1 can't update itself, so install 0.2 from the disk image once.
+
 ## If something doesn't work
 
 | Problem | Try this |

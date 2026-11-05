@@ -19,6 +19,7 @@ The first supported device is the Bose QuietComfort Ultra Headphones (2nd Gen). 
 - **Two computers on one headset:** connect remembered devices, including a Windows PC, and bring audio to your Mac with one click
 - **At a glance:** battery level, active audio source and connection status
 - **Notifications:** low battery and lost connection
+- **Updates:** installs new versions from within the app, with automatic checks off until you turn them on
 - **Native:** Liquid Glass on macOS 26, light and dark mode, English and German, VoiceOver labels
 
 ## Screenshots
