@@ -163,6 +163,7 @@ struct SettingsPage: View {
 
 extension Toggle {
     /// A full-width row with the switch on the trailing edge.
+    @MainActor
     func toggleRow() -> some View {
         toggleStyle(.switch)
             .frame(maxWidth: .infinity, alignment: .leading)
