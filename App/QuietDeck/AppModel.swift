@@ -13,7 +13,7 @@ final class AppModel {
         case checking, bluetoothOff, noDevice, ready
     }
 
-    private(set) var availability: Availability = .checking
+    private(set) var availability: Availability
     private(set) var controller: DeviceController?
     let presets = EqualizerPresetStore()
     let settings: AppSettings
@@ -25,14 +25,10 @@ final class AppModel {
     var selectedSection: WindowSection = .device(.listening)
 
     private var watcher: BluetoothConnectionWatcher?
+    private var isStarting = false
 
-    init() {
-        settings = AppSettings()
-        notifier = Notifier(settings: settings)
-    }
-
-    /// For previews and snapshots.
-    init(availability: Availability, controller: DeviceController?) {
+    /// The arguments are for previews and snapshots.
+    init(availability: Availability = .checking, controller: DeviceController? = nil) {
         self.availability = availability
         self.controller = controller
         settings = AppSettings()
@@ -44,7 +40,9 @@ final class AppModel {
     }
 
     func start() async {
-        guard controller == nil else { return }
+        guard controller == nil, !isStarting else { return }
+        isStarting = true
+        defer { isStarting = false }
         guard await BluetoothDevices.isPoweredOn() else {
             availability = .bluetoothOff
             return
@@ -61,8 +59,8 @@ final class AppModel {
         }
         let controller = DeviceController(driver: driver)
         #if DEBUG
-            controller.trace = { Self.appendTrace($0) }
-            Self.appendTrace("start, device found")
+            controller.trace = { DebugTrace.append($0) }
+            DebugTrace.append("start, device found")
         #endif
         self.controller = controller
         availability = .ready
@@ -77,30 +75,13 @@ final class AppModel {
         let notifier = notifier
         controller.onBatteryReading = { notifier.batteryChanged(percent: $0) }
         controller.onPhaseChange = { notifier.phaseChanged($0) }
-        await controller.connect()
-
+        // Known before connecting, so the first list of sources already shows this Mac.
         controller.localSourceID = await BluetoothDevices.hostAddress()
+        await controller.connect()
         await notifier.requestPermissionIfNeeded()
-        #if DEBUG
-            Self.appendTrace("local address known: \(controller.localSourceID != nil)")
-        #endif
     }
 
     #if DEBUG
-        private static func appendTrace(_ message: String) {
-            let directory = FileManager.default.homeDirectoryForCurrentUser.appending(path: "Library/Logs/QuietDeck")
-            try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-            let url = directory.appending(path: "ui-trace.log")
-            let line = Data("\(Date().formatted(.iso8601.time(includingFractionalSeconds: true))) \(message)\n".utf8)
-            if let handle = try? FileHandle(forWritingTo: url) {
-                _ = try? handle.seekToEnd()
-                try? handle.write(contentsOf: line)
-                try? handle.close()
-            } else {
-                try? line.write(to: url)
-            }
-        }
-
         /// Installs a controller for the scene click test.
         func useForTesting(_ controller: DeviceController) {
             self.controller = controller

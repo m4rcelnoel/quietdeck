@@ -55,4 +55,4 @@ The Release workflow needs these repository secrets:
 
 ## Testing on hardware
 
-Debug builds have launch arguments for hardware checks. They're listed in `App/QuietDeck/TransportDiagnostics.swift`.
+Debug builds have launch arguments for hardware checks. They're listed in `App/QuietDeck/Diagnostics/TransportDiagnostics.swift`.

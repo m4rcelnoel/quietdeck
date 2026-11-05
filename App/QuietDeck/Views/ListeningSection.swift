@@ -66,13 +66,7 @@ struct ListeningSection: View {
             if let noise = capabilities.noiseControl, let level = state.noiseLevel {
                 DeckRow {
                     Text("Noise control")
-                    LevelSlider(value: level, range: noise.range, label: "Noise control") {
-                        controller.setNoiseLevel($0)
-                    }
-                    .disabled(controller.isNoiseControlMasked)
-                    Text("\(level)")
-                        .monospacedDigit()
-                        .frame(width: 22, alignment: .trailing)
+                    NoiseLevelControl(controller: controller, level: level, range: noise.range)
                 }
             }
             ProblemNote(controller: controller, controls: [.noiseLevel])
@@ -95,20 +89,11 @@ struct ListeningSection: View {
             }
             ProblemNote(controller: controller, controls: [.spatialAudio])
             if capabilities.windBlock != nil, let wind = state.windBlock {
-                DeckRow {
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("Wind block")
-                        if wind {
-                            Text("Noise control has no effect while this is on.")
-                                .font(.callout)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    Spacer()
-                    Toggle("Wind block", isOn: Binding(get: { wind }, set: { controller.setWindBlock($0) }))
-                        .labelsHidden()
-                        .toggleStyle(.switch)
-                }
+                SwitchRow(
+                    title: "Wind block",
+                    detail: wind ? "Noise control has no effect while this is on." : nil,
+                    isOn: Binding(get: { wind }, set: { controller.setWindBlock($0) })
+                )
             }
             ProblemNote(controller: controller, controls: [.windBlock])
         }

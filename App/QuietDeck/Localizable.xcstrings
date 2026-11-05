@@ -61,6 +61,16 @@
         }
       }
     },
+    "All sources…": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alle Quellen …"
+          }
+        }
+      }
+    },
     "Allow Bluetooth": {
       "localizations": {
         "de": {
