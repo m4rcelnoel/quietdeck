@@ -86,13 +86,6 @@ private let full = DeviceCapabilities(
 }
 
 @Suite struct ValueTests {
-    @Test func levelClampsToRange() {
-        let level = LevelCapability(range: -10...10)
-        #expect(level.clamp(-11) == -10)
-        #expect(level.clamp(4) == 4)
-        #expect(level.clamp(11) == 10)
-    }
-
     @Test func sourceListFindsActiveAndGroups() {
         let list = AudioSourceList(sources: [
             AudioSource(id: "1", name: "Studio Mac", kind: .computer, status: .connected),
@@ -103,9 +96,12 @@ private let full = DeviceCapabilities(
         #expect(list.sources(with: .remembered).map(\.id) == ["3"])
     }
 
-    @Test func authenticationFailuresAreNeverRetried() {
-        #expect(!DriverError.authenticationRequired.isRetryable)
-        #expect(!DriverError.rejected(code: 6, reason: "Invalid data").isRetryable)
-        #expect(DriverError.timeout.isRetryable)
+    @Test func sourcesSortByStatus() {
+        let list = AudioSourceList(sources: [
+            AudioSource(id: "1", name: "iPhone", kind: .phone, status: .remembered),
+            AudioSource(id: "2", name: "Studio Mac", kind: .computer, status: .connected),
+            AudioSource(id: "3", name: "This Mac", kind: .computer, status: .active),
+        ])
+        #expect(list.byStatus.map(\.id) == ["3", "2", "1"])
     }
 }

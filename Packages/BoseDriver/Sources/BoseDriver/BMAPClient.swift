@@ -4,11 +4,7 @@ import TransportInterface
 
 /// One frame seen on the wire.
 public struct BMAPTraffic: Sendable, Equatable {
-    public enum Direction: Sendable, Equatable {
-        case sent, received
-    }
-
-    public var direction: Direction
+    public var direction: FrameLogEntry.Direction
     public var frame: BMAPFrame
 }
 
@@ -47,7 +43,10 @@ public actor BMAPClient {
         self.transport = transport
         self.timeout = timeout
         (unsolicited, unsolicitedContinuation) = AsyncStream.makeStream(of: BMAPFrame.self)
-        (traffic, trafficContinuation) = AsyncStream.makeStream(of: BMAPTraffic.self)
+        // Nothing has to read this, so old frames are dropped instead of piling up.
+        (traffic, trafficContinuation) = AsyncStream.makeStream(
+            of: BMAPTraffic.self, bufferingPolicy: .bufferingNewest(256)
+        )
         (connectionEvents, connectionContinuation) = AsyncStream.makeStream(of: TransportEvent.self)
     }
 
@@ -67,14 +66,6 @@ public actor BMAPClient {
                 }
             },
         ]
-    }
-
-    public func stop() {
-        for listener in listeners {
-            listener.cancel()
-        }
-        listeners = []
-        finishPending(with: .failure(DriverError.notConnected))
     }
 
     /// Runs one request-response exchange. Calls are served strictly in order.

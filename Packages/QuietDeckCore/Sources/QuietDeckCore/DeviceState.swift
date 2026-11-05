@@ -101,6 +101,11 @@ public struct AudioSourceList: Sendable, Equatable {
         sources.first { $0.status == .active }
     }
 
+    /// Active first, then connected, then remembered, so a short list keeps what matters.
+    public var byStatus: [AudioSource] {
+        [AudioSource.Status.active, .connected, .remembered].flatMap(sources(with:))
+    }
+
     public func sources(with status: AudioSource.Status) -> [AudioSource] {
         sources.filter { $0.status == status }
     }

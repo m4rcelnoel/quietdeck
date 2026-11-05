@@ -172,7 +172,7 @@ public actor BoseHeadphoneDriver: HeadphoneDriver {
     private func readSources() async throws -> AudioSourceList? {
         guard let list = try await read(BoseAddress.pairedDevices) else { return nil }
         var devices: [BoseDeviceInfo] = []
-        for address in BoseProbe.macAddresses(inDeviceList: list) {
+        for address in BoseStateCodec.addresses(inDeviceList: list) {
             if let payload = try await read(BoseAddress.deviceInfo, payload: address),
                 let info = BoseStateCodec.deviceInfo(payload)
             {
@@ -266,7 +266,8 @@ public actor BoseHeadphoneDriver: HeadphoneDriver {
         case BoseAddress.equalizer:
             state.equalizer = BoseStateCodec.equalizer(frame.payload) ?? state.equalizer
         case BoseAddress.batteryLevel:
-            state.battery = BoseStateCodec.batteryPercent(frame.payload).map { BatteryStatus(percent: $0) }
+            state.battery =
+                BoseStateCodec.batteryPercent(frame.payload).map { BatteryStatus(percent: $0) } ?? state.battery
         case BoseAddress.multipoint:
             state.multipoint = BoseStateCodec.multipoint(frame.payload) ?? state.multipoint
         default:

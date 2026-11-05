@@ -82,7 +82,6 @@ import Testing
         let info = BoseStateCodec.deviceInfo(payload)
         #expect(info?.name == "Studio")
         #expect(info?.isConnected == true)
-        #expect(info?.isActive == true)
         #expect(info?.kind == .computer)
     }
 
@@ -116,11 +115,11 @@ import Testing
 
     @Test func activeSourceDecidesStatus() {
         let first = BoseDeviceInfo(
-            address: [1, 1, 1, 1, 1, 1], isConnected: true, isActive: true, kind: .computer, name: "A")
+            address: [1, 1, 1, 1, 1, 1], isConnected: true, kind: .computer, name: "A")
         let second = BoseDeviceInfo(
-            address: [2, 2, 2, 2, 2, 2], isConnected: true, isActive: false, kind: .computer, name: "B")
+            address: [2, 2, 2, 2, 2, 2], isConnected: true, kind: .computer, name: "B")
         let third = BoseDeviceInfo(
-            address: [3, 3, 3, 3, 3, 3], isConnected: false, isActive: false, kind: .phone, name: "C")
+            address: [3, 3, 3, 3, 3, 3], isConnected: false, kind: .phone, name: "C")
         let list = BoseStateCodec.sourceList(devices: [first, second, third], activeAddress: second.address)
         #expect(list.sources.map(\.status) == [.connected, .active, .remembered])
     }

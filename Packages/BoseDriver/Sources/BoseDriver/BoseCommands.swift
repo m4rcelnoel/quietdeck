@@ -11,7 +11,6 @@ enum BoseAddress {
     static let connectDevice = BMAPAddress(functionBlock: 4, function: 1)
     static let pairedDevices = BMAPAddress(functionBlock: 4, function: 4)
     static let deviceInfo = BMAPAddress(functionBlock: 4, function: 5)
-    static let routing = BMAPAddress(functionBlock: 4, function: 12)
     static let activeSource = BMAPAddress(functionBlock: 5, function: 1)
     static let audioControl = BMAPAddress(functionBlock: 5, function: 3)
     static let currentMode = BMAPAddress(functionBlock: 31, function: 3)
