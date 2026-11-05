@@ -1,0 +1,9 @@
+#!/bin/sh
+# Blocks direct pushes to main. Changes reach main through a pull request from staging.
+while read -r _ _ remote_ref _; do
+  if [ "$remote_ref" = "refs/heads/main" ]; then
+    echo "Direct pushes to main are blocked. Push to staging and open a pull request." >&2
+    exit 1
+  fi
+done
+exit 0

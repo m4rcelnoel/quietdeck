@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Sign, notarize and publish
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Choose a keychain path
+        run: echo "KEYCHAIN=$RUNNER_TEMP/release.keychain-db" >> "$GITHUB_ENV"
+
+      - name: Refuse tags that aren't on main
+        run: |
+          git fetch origin main
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+
+      - name: Run tests
+        run: scripts/test.sh
+
+      - name: Import the signing certificate
+        env:
+          CERTIFICATE: ${{ secrets.DEVELOPER_ID_P12_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.DEVELOPER_ID_P12_PASSWORD }}
+        run: |
+          keychain_password=$(uuidgen)
+          echo "$CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
+          security create-keychain -p "$keychain_password" "$KEYCHAIN"
+          security set-keychain-settings -lut 3600 "$KEYCHAIN"
+          security unlock-keychain -p "$keychain_password" "$KEYCHAIN"
+          security import "$RUNNER_TEMP/certificate.p12" -k "$KEYCHAIN" -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$keychain_password" "$KEYCHAIN"
+          security list-keychains -d user -s "$KEYCHAIN"
+          rm "$RUNNER_TEMP/certificate.p12"
+
+      - name: Store notary credentials
+        env:
+          APPLE_ID: ${{ secrets.NOTARY_APPLE_ID }}
+          APP_PASSWORD: ${{ secrets.NOTARY_PASSWORD }}
+          TEAM_ID: ${{ secrets.TEAM_ID }}
+        run: |
+          xcrun notarytool store-credentials quietdeck-notary \
+            --apple-id "$APPLE_ID" --team-id "$TEAM_ID" --password "$APP_PASSWORD" --keychain "$KEYCHAIN"
+
+      - name: Build, sign and notarize
+        env:
+          TEAM_ID: ${{ secrets.TEAM_ID }}
+        run: NOTARY_KEYCHAIN="$KEYCHAIN" scripts/release.sh
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" build/release/*.dmg --generate-notes
+
+      - name: Remove the keychain
+        if: always()
+        run: security delete-keychain "$KEYCHAIN" || true
