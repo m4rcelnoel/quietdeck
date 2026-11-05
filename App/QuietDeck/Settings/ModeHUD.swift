@@ -6,18 +6,26 @@ import SwiftUI
 final class ModeHUD {
     static let shared = ModeHUD()
 
+    private static let size = NSSize(width: 200, height: 160)
+
     private var panel: NSPanel?
+    private var content: NSHostingView<HUDContent>?
     private var hideTask: Task<Void, Never>?
 
     func show(title: String, symbol: String) {
-        let size = NSSize(width: 200, height: 160)
-        let panel = panel ?? makePanel(size: size)
+        let panel = panel ?? makePanel()
         self.panel = panel
-        panel.contentView = NSHostingView(rootView: HUDContent(title: title, symbol: symbol))
-        if let screen = NSScreen.main?.visibleFrame {
-            panel.setFrameOrigin(NSPoint(x: screen.midX - size.width / 2, y: screen.minY + screen.height * 0.18))
+        let view = HUDContent(title: title, symbol: symbol)
+        if let content {
+            content.rootView = view
+        } else {
+            let content = NSHostingView(rootView: view)
+            panel.contentView = content
+            self.content = content
         }
-        panel.alphaValue = 1
+        if let screen = NSScreen.main?.visibleFrame {
+            panel.setFrameOrigin(NSPoint(x: screen.midX - Self.size.width / 2, y: screen.minY + screen.height * 0.18))
+        }
         panel.orderFrontRegardless()
 
         hideTask?.cancel()
@@ -28,9 +36,9 @@ final class ModeHUD {
         }
     }
 
-    private func makePanel(size: NSSize) -> NSPanel {
+    private func makePanel() -> NSPanel {
         let panel = NSPanel(
-            contentRect: NSRect(origin: .zero, size: size),
+            contentRect: NSRect(origin: .zero, size: Self.size),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
