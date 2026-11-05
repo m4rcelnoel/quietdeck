@@ -41,6 +41,42 @@ private func connected(
         #expect(state.sources?.sources(with: .connected).map(\.name) == ["Other"])
     }
 
+    @Test func nameAndFirmwareAreReadOncePerConnection() async throws {
+        let headset = SimulatedHeadset()
+        let transport = MockTransport { headset.respond(to: $0) }
+        let driver = BoseHeadphoneDriver(device: device, transport: transport)
+        try await driver.connect()
+
+        func nameReads() async -> Int {
+            await transport.sent.filter { Array($0.prefix(2)) == [1, 2] }.count
+        }
+        let first = try await driver.refreshState()
+        let second = try await driver.refreshState()
+        #expect(second.name == first.name)
+        #expect(second.firmwareVersion == first.firmwareVersion)
+        #expect(await nameReads() == 1)
+    }
+
+    @Test func aMalformedBatteryReportKeepsTheLastLevel() async throws {
+        let headset = SimulatedHeadset()
+        let transport = MockTransport { headset.respond(to: $0) }
+        let driver = BoseHeadphoneDriver(device: device, transport: transport)
+        try await driver.connect()
+        _ = try await driver.refreshState()
+
+        var events = driver.events.makeAsyncIterator()
+        await transport.deliver([2, 2, 3, 1, 200])
+        await transport.deliver([31, 3, 3, 1, 1])
+        var battery: BatteryStatus?
+        while let event = await events.next() {
+            if case .stateChanged(let state) = event, state.mode == .preset("aware") {
+                battery = state.battery
+                break
+            }
+        }
+        #expect(battery?.percent == 90)
+    }
+
     @Test func refreshSurvivesARefusedFunction() async throws {
         let headset = SimulatedHeadset()
         headset.state.withLock { $0.refused = [BoseAddress.multipoint] }
