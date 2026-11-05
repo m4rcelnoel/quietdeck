@@ -8,6 +8,14 @@ This describes what the app does with data. It's a technical description, not le
 - No analytics, tracking, advertising or crash reporting.
 - No connection to any server operated by the developer or a headphone manufacturer.
 
+## Updates
+
+GitHub is the only server QuietDeck contacts, and only for updates. Automatic checks are off until you turn them on in Settings > Updates.
+
+- **When:** when you choose Check for Updates, or about once a day if you turned automatic checks on.
+- **What is sent:** an ordinary web request for the update feed, and for the new version if you install it. GitHub sees your IP address and the app's name and version. QuietDeck sends no system profile.
+- **Who receives it:** GitHub, Inc., under its own privacy statement. The developer doesn't receive this data.
+
 ## What stays on this Mac
 
 | Data | Purpose | Where | How long |
@@ -29,4 +37,3 @@ Settings > About QuietDeck > Delete removes everything the app has stored on thi
 ## Rules for future features
 
 - **Handoff between Macs:** data stays on the local network, between Macs the user linked. It must be documented here before release.
-- **Updates:** checking for updates sends the requesting IP address to the update server. This must be off until the user turns it on, and must be documented here before release.

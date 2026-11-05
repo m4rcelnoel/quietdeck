@@ -9,6 +9,7 @@ struct SettingsPage: View {
 
     var body: some View {
         @Bindable var settings = app.settings
+        @Bindable var updater = app.updater
         section("General") {
             DeckGroup {
                 DeckRow {
@@ -89,6 +90,27 @@ struct SettingsPage: View {
                             ShortcutRecorder(combo: binding(for: action))
                         }
                     }
+                }
+            }
+        }
+
+        section("Updates") {
+            DeckGroup {
+                DeckRow {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Check for updates automatically")
+                        Text("Off by default. QuietDeck asks GitHub once a day, and GitHub sees your IP address.")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Toggle("Check for updates automatically", isOn: $updater.checksAutomatically)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                }
+                DeckRow {
+                    Spacer()
+                    CheckForUpdatesButton(updater: app.updater)
                 }
             }
         }
@@ -220,7 +242,7 @@ struct AboutPage: View {
             DeckGroup {
                 DeckRow {
                     Text(
-                        "QuietDeck works entirely on this Mac. There is no account, no analytics and no tracking, and nothing is sent to a server."
+                        "QuietDeck works on this Mac. There is no account, no analytics and no tracking. The only server it contacts is GitHub, when you check for updates, and GitHub then sees your IP address."
                     )
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)

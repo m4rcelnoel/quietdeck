@@ -201,6 +201,26 @@
         }
       }
     },
+    "Check for Updates…": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nach Updates suchen …"
+          }
+        }
+      }
+    },
+    "Check for updates automatically": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automatisch nach Updates suchen"
+          }
+        }
+      }
+    },
     "Check that your headphones are on and that no other app is using them.": {
       "localizations": {
         "de": {
@@ -791,6 +811,16 @@
         }
       }
     },
+    "Off by default. QuietDeck asks GitHub once a day, and GitHub sees your IP address.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Standardmäßig aus. QuietDeck fragt einmal täglich bei GitHub nach, und GitHub sieht dabei deine IP-Adresse."
+          }
+        }
+      }
+    },
     "Open Bluetooth Settings": {
       "localizations": {
         "de": {
@@ -941,12 +971,12 @@
         }
       }
     },
-    "QuietDeck works entirely on this Mac. There is no account, no analytics and no tracking, and nothing is sent to a server.": {
+    "QuietDeck works on this Mac. There is no account, no analytics and no tracking. The only server it contacts is GitHub, when you check for updates, and GitHub then sees your IP address.": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "QuietDeck arbeitet vollständig auf diesem Mac. Es gibt kein Konto, keine Analyse und kein Tracking, und nichts wird an einen Server gesendet."
+            "value": "QuietDeck arbeitet auf diesem Mac. Es gibt kein Konto, keine Analyse und kein Tracking. Der einzige Server, den die App kontaktiert, ist GitHub, wenn du nach Updates suchst. GitHub sieht dabei deine IP-Adresse."
           }
         }
       }
@@ -1297,6 +1327,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Unbekannt"
+          }
+        }
+      }
+    },
+    "Updates": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Updates"
           }
         }
       }

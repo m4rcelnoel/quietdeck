@@ -38,7 +38,7 @@ Use English and [Conventional Commits](https://www.conventionalcommits.org): `fe
 | Workflow | Runs on | Does |
 |---|---|---|
 | CI | Pushes to `staging`, pull requests to `main` | Lint, tests and a Debug build |
-| Release | Tags like `v0.2.0` on `main` | Tests, signs, notarizes and publishes a DMG |
+| Release | Tags like `v0.2.0` on `main` | Tests, signs, notarizes and publishes a DMG and its update feed. Started by hand, it skips publishing |
 
 macOS runners use GitHub's included minutes at a higher rate than Linux runners.
 
@@ -51,6 +51,7 @@ The Release workflow needs these repository secrets:
 | `NOTARY_APPLE_ID` | The Apple ID for notarization |
 | `NOTARY_PASSWORD` | An app-specific password |
 | `TEAM_ID` | The Apple Developer team ID |
+| `SPARKLE_ED_PRIVATE_KEY` | The update signing key, see [docs/release.md](docs/release.md) |
 
 ## Testing on hardware
 
