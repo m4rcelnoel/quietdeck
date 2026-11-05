@@ -29,11 +29,31 @@ fi
 
 echo "==> Archiving"
 xcodebuild -project QuietDeck.xcodeproj -scheme QuietDeck -configuration Release \
-  -archivePath "$archive" -destination 'generic/platform=macOS' archive "${signing[@]}" -quiet
+  -archivePath "$archive" -destination 'generic/platform=macOS' \
+  -clonedSourcePackagesDirPath build/SourcePackages archive "${signing[@]}" -quiet
 
 cp -R "$archive/Products/Applications/QuietDeck.app" "$app"
 version=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app/Contents/Info.plist")
 dmg="$out/QuietDeck-$version.dmg"
+
+if [[ -z "$(/usr/libexec/PlistBuddy -c 'Print :SUPublicEDKey' "$app/Contents/Info.plist")" ]]; then
+  echo "Set SPARKLE_PUBLIC_KEY in the Xcode project, see docs/release.md" >&2
+  exit 1
+fi
+
+if [[ "${SKIP_SIGNING:-0}" != "1" ]]; then
+  # An archive leaves Sparkle's helpers with their original signatures, which notarization
+  # rejects. Inner code has to be signed first.
+  echo "==> Signing Sparkle's helpers"
+  sparkle="$app/Contents/Frameworks/Sparkle.framework"
+  sign=(codesign --force --timestamp --options runtime --sign "$identity")
+  "${sign[@]}" "$sparkle/Versions/B/XPCServices/Installer.xpc"
+  "${sign[@]}" --preserve-metadata=entitlements "$sparkle/Versions/B/XPCServices/Downloader.xpc"
+  "${sign[@]}" "$sparkle/Versions/B/Autoupdate"
+  "${sign[@]}" "$sparkle/Versions/B/Updater.app"
+  "${sign[@]}" "$sparkle"
+  "${sign[@]}" --preserve-metadata=entitlements "$app"
+fi
 
 echo "==> Checking the signature"
 codesign --verify --deep --strict "$app"
